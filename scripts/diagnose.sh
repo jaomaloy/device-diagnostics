@@ -65,73 +65,73 @@ filter_container_envs='jq "del(.[].Config.Env)"'
 commands=(
 	# BALENA specific commands
 	'echo === BALENA ==='
-	'curl --unix-socket /var/run/$ENG.sock http://./debug/pprof/goroutine?debug=2'
-	'$ENG --version'
-	'$ENG images'
-	'$ENG ps -a'
-	'$ENG stats --all --no-stream'
-	'$ENG system df'
-	'$ENG volume ls'
-	'$ENG network ls'
-	'systemctl status $ENG --no-pager'
-	'journalctl --no-pager --no-hostname -n 200 -a -u $ENG'
-	'journalctl --no-pager --no-hostname -n 1000 -at balenad'
+	'curl --unix-socket /var/run/$ENG.sock http://./debug/pprof/goroutine?debug=2' # query engine socket for a full goroutine stacktrace (useful for finding leaks)
+	'$ENG --version' # check what version of engine we have
+	'$ENG images' # list images
+	'$ENG ps -a' # list containers
+	'$ENG stats --all --no-stream' # display a live stream of container(s) resource usage statistics
+	'$ENG system df' # show docker disk usage
+	'$ENG volume ls' # list volumes 
+	'$ENG network ls' # list networks
+	'systemctl status $ENG --no-pager' # show runtime status of the engine
+	'journalctl --no-pager --no-hostname -n 200 -a -u $ENG' # show journal entries for the engine
+	'journalctl --no-pager --no-hostname -n 1000 -at balenad' # show journal entries with 'balenad' specific syslog identifier
 	'$ENG inspect \$($ENG ps --all --quiet | tr \"\\n\" \" \") | $filter_container_envs'
 	'$ENG network inspect \$($ENG network ls --quiet | tr \"\\n\" \" \")'
-	'test -f /mnt/state/balena-engine-storage-migration.log && cat /mnt/state/balena-engine-storage-migration.log'
+	'test -f /mnt/state/balena-engine-storage-migration.log && cat /mnt/state/balena-engine-storage-migration.log' # checks if engine storage migration logs exists
 
 	# Boot performance
 	'echo === BOOT ==='
-	'systemd-analyze'
-	'systemd-analyze critical-chain'
+	'systemd-analyze' # show basic boot statistics
+	'systemd-analyze critical-chain' # shows the time-critical chain of events that take place during startup. These are the systemd units you want to look at if startup is slow as they are the ones that would cause delays.
 
 	# HARDWARE specific commands
 	'echo === HARDWARE ==='
-	'cat /proc/cpuinfo'
-	'cat /proc/device-tree/model'
-	'cat /proc/meminfo'
-	'ps'
-	'top -b -n 1'
+	'cat /proc/cpuinfo' # check cpu information
+	'cat /proc/device-tree/model' # check device model
+	'cat /proc/meminfo' # check memory info
+	'ps' # check current running process
+	'top -b -n 1' # list processes
 	'cat /var/log/provisioning-progress.log'
-	'df -h'
-	'df -ih'
-	'for i in /sys/class/thermal/thermal* ; do if [ -e \$i/temp ]; then echo \$i && cat \$i/temp; fi ; done'
-	'for i in /sys/class/mmc_host/mmc*/mmc* ; do if [ -e \$i/oemid ]; then echo \$i; for j in manfid oemid name hwrev fwrev; do printf \$j: && cat \$i/\$j; done; fi; done'
-	'free -h'
-	'ls -l /dev'
-	'lsusb -vvv'
-	'mmcli -L'
-	'mount'
-	'uname -a'
+	'df -h' # check disk usage
+	'df -ih' # check disk usage in inodes
+	'for i in /sys/class/thermal/thermal* ; do if [ -e \$i/temp ]; then echo \$i && cat \$i/temp; fi ; done' # check thermal zones
+	'for i in /sys/class/mmc_host/mmc*/mmc* ; do if [ -e \$i/oemid ]; then echo \$i; for j in manfid oemid name hwrev fwrev; do printf \$j: && cat \$i/\$j; done; fi; done' # check memory card info
+	'free -h' # free memory
+	'ls -l /dev' # check devices
+	'lsusb -vvv' # list usb devices
+	'mmcli -L' # list available modems and monitor modems added or removed 
+	'mount' # list mounts
+	'uname -a' # print system information
 
 	# NETWORK specific commands
 	'echo === NETWORK ==='
-	'/sbin/ip addr'
-	'cat /etc/resolv.conf'
-	'cat /proc/net/dev'
-	'cat /proc/net/snmp'
-	'cat /proc/net/udp'
-	'${CURLB} $API_ENDPOINT/ping'
-	'${CURLB} https://www.google.co.uk'
-	'ifconfig'
-	'iptables -n -L'
-	'iptables -n -t nat -L'
-	'journalctl --no-pager --no-hostname -a -u ModemManager'
-	'journalctl --no-pager --no-hostname -n 200 -a -u \"openvpn*\"'
-	'ls -l /mnt/boot/system-connections'
-	'mmcli -m 0'
-	'netstat -ntl'
-	'nmcli --version'
-	'ping -c 1 -W 3 google.co.uk'
-	'systemctl kill -s USR1 dnsmasq'
-	'systemctl status openvpn-resin --no-pager'
+	'/sbin/ip addr' # check ip addresses
+	'cat /etc/resolv.conf' # check system's DNS
+	'cat /proc/net/dev' # check network stats like invalid packets, carrier errors, aborted errors
+	'cat /proc/net/snmp' # check values from MIB databases that the kernel keeps
+	'cat /proc/net/udp' # holds a dump of the UDP socket table
+	'${CURLB} $API_ENDPOINT/ping' # curl API with CA cert bundle
+	'${CURLB} https://www.google.co.uk' # curl google
+	'ifconfig' # check interface
+	'iptables -n -L' # inspect packet filter rules
+	'iptables -n -t nat -L' # nat table
+	'journalctl --no-pager --no-hostname -a -u ModemManager' # check modem manager logs
+	'journalctl --no-pager --no-hostname -n 200 -a -u \"openvpn*\"' # check logs specific for openvpn
+	'ls -l /mnt/boot/system-connections' # balena specific system connections
+	'mmcli -m 0' # check if modem connected
+	'netstat -ntl' # show listening tcp sockets 
+	'nmcli --version' # show nmcli version
+	'ping -c 1 -W 3 google.co.uk' # ping google
+	'systemctl kill -s USR1 dnsmasq' # flush dnsmasq cache
+	'systemctl status openvpn-resin --no-pager' # check vpn service
 
 	# OS specific commands
 	'echo === OS ==='
-	'cat /etc/os-release'
-	'cat /mnt/boot/config.json | $filter_config_keys'
+	'cat /etc/os-release' # check os version
+	'cat /mnt/boot/config.json | $filter_config_keys' # check config keys
 	'cat /mnt/boot/config.txt' # only for rpi...
-	'cat /mnt/boot/device-type.json'
+	'cat /mnt/boot/device-type.json' # check device type
 	'cat /mnt/boot/extlinux/extlinux.conf'
 	'cat /mnt/boot/resinOS_uEnv.txt' # ibidem
 	'cat /mnt/boot/uEnv.txt' # only for uboot devices
@@ -139,38 +139,38 @@ commands=(
 	'cat /mnt/data-disk/config.json | $filter_config_keys'  # legacy
 	'cat /var/log/messages' # legacy
 	'cat /var/log/provisioning-progress.log'
-	'dmesg -T'
-	'find /mnt/data/*hup/*log -mtime -180 | xargs tail -n 250 -v'
-	'journalctl --no-pager --no-hostname  --list-boots'
+	'dmesg -T' # print control ring buffer with human readable timestamps
+	'find /mnt/data/*hup/*log -mtime -180 | xargs tail -n 250 -v' # check HUP logs
+	'journalctl --no-pager --no-hostname  --list-boots' # list number of boots
 	'journalctl --no-pager --no-hostname -n500 -a'
-	'journalctl --no-pager --no-hostname -pwarning -perr -a'
-	'ls -lR /proc/ 2>/dev/null | grep '/data/' | grep \(deleted\)'
-	'ps'
-	'stat /var/lock/*hup.lock'
-	'sysctl -a'
-	'systemctl list-units --failed --no-pager'
-	'top -b -n 1'
+	'journalctl --no-pager --no-hostname -pwarning -perr -a' # list warnings and errors
+	'ls -lR /proc/ 2>/dev/null | grep '/data/' | grep \(deleted\)' 
+	'ps' # check running process
+	'stat /var/lock/*hup.lock' # if a hup lockfile exists
+	'sysctl -a' # show kernel parameters
+	'systemctl list-units --failed --no-pager' # list failed units
+	'top -b -n 1' # check running processes
 	'grep -vE \"/var/cache/ldconfig/aux-cache|md5sum|/etc/hostname|/etc/machine-id|/etc/balena-supervisor/supervisor.conf|/etc/resin-supervisor/supervisor.conf|/etc/systemd/timesyncd.conf|/home/root/.rnd\" /resinos.fingerprint | md5sum --quiet -c ' # https://github.com/balena-os/meta-balena/issues/1618
 
 	# SUPERVISOR specific commands
 	'echo === SUPERVISOR ==='
 	'$ENG exec $($ENG ps --filter "name=resin_supervisor" --filter "name=balena_supervisor" -q) cat /etc/resolv.conf'
-	'$ENG logs $($ENG ps --filter "name=resin_supervisor" --filter "name=balena_supervisor" -q)'
-	'curl --max-time 5 localhost:'"${LISTEN_PORT}"'/v1/healthy'
-	'journalctl --no-pager --no-hostname -n 200 -a -u balena-supervisor -u resin-supervisor'
-	'ls -lR /tmp/*-supervisor/**/*'
-	'systemctl status balena-supervisor resin-supervisor --no-pager'
+	'$ENG logs $($ENG ps --filter "name=resin_supervisor" --filter "name=balena_supervisor" -q)' # check logs
+	'curl --max-time 5 localhost:'"${LISTEN_PORT}"'/v1/healthy' # Responds with an empty 200 response if the supervisor is healthy, or a 500 status code if something is not working correctly.
+	'journalctl --no-pager --no-hostname -n 200 -a -u balena-supervisor -u resin-supervisor' # check journal logs
+	'ls -lR /tmp/*-supervisor/**/*' # check supervisor files
+	'systemctl status balena-supervisor resin-supervisor --no-pager' # check supervisor service
 	'tail -500 /var/log/supervisor-log/resin_supervisor_stdout.log' # legacy
 
 	# TIME specific commands
 	'echo === TIME ==='
 	'cat /tmp/chrony_added_dhcp_ntp_servers'
-	'chronyc sources'
-	'chronyc tracking'
-	'date'
-	'journalctl --no-pager --no-hostname -u chronyd'
-	'timedatectl status'
-	'uptime'
+	'chronyc sources' # list current time sources
+	'chronyc tracking' # displays parameters about the system clock's performance
+	'date' # print the date and time
+	'journalctl --no-pager --no-hostname -u chronyd' # check chronyd journal logs
+	'timedatectl status' # Show current settings of the system clock and RTC, including whether network time synchronization is active.
+	'uptime' # show system uptime
 )
 
 function each_command()
